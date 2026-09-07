@@ -1,0 +1,41 @@
+name: PR Review Bot
+
+# Ce workflow se déclenche à chaque fois qu'une PR est ouverte,
+# ou qu'un nouveau commit est poussé sur une PR déjà ouverte.
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+# Permissions nécessaires pour que le bot puisse lire le code
+# et écrire des commentaires sur les PR.
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Récupère le code du repo dans l'environnement d'exécution
+      - name: Checkout du code
+        uses: actions/checkout@v4
+
+      # 2. Installe Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 3. Installe les dépendances (requests, groq, python-dotenv)
+      - name: Installer les dépendances
+        run: pip install -r requirements.txt
+
+      # 4. Lance le bot avec les bonnes variables d'environnement
+      - name: Lancer l'analyse de la PR
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python main.py
