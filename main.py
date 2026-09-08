@@ -9,8 +9,8 @@ Point d'entrée du bot. Orchestre les 3 étapes :
 import os
 import sys
 
-from bot.get_diff import get_pr_diff
-from bot.analyze import analyze_diff
+from bot.get_diff import get_pr_diff, diff_has_code_changes
+from bot.analyze import analyze_diff, AnalysisError
 from bot.post_comment import post_pr_comment
 
 
@@ -45,8 +45,24 @@ def main():
         print("Diff vide, rien à analyser.")
         return
 
+    if not diff_has_code_changes(diff):
+        print("Aucun fichier de code modifié (doc/config uniquement), analyse ignorée.")
+        return
+
     print("Analyse du diff avec l'IA...")
-    analysis = analyze_diff(diff, groq_api_key)
+    try:
+        analysis = analyze_diff(diff, groq_api_key)
+    except AnalysisError as error:
+        # L'IA n'a pas pu répondre après plusieurs tentatives : on prévient
+        # quand même les développeurs via un commentaire, plutôt que de
+        # faire échouer le workflow en silence.
+        print(f"Erreur d'analyse : {error}")
+        fallback_message = (
+            "⚠️ L'analyse automatique n'a pas pu être générée "
+            f"(erreur technique : {error}). Réessayez plus tard ou relancez le workflow."
+        )
+        post_pr_comment(repo, pr_number, fallback_message, github_token)
+        sys.exit(1)
 
     print("Publication du commentaire sur la PR...")
     post_pr_comment(repo, pr_number, analysis, github_token)

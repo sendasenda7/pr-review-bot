@@ -36,6 +36,44 @@ def get_pr_diff(repo: str, pr_number: str, github_token: str) -> str:
     return response.text
 
 
+# Extensions considérées comme "non-code" : les modifier ne justifie pas
+# un appel à l'IA (documentation, données, dépendances verrouillées...).
+NON_CODE_EXTENSIONS = {
+    ".md", ".txt", ".rst",
+    ".json", ".lock", ".yml", ".yaml",
+    ".gitignore", ".png", ".jpg", ".jpeg", ".gif", ".svg",
+    ".csv", ".log",
+}
+
+
+def diff_has_code_changes(diff: str) -> bool:
+    """
+    Vérifie si un diff contient au moins un fichier de code modifié
+    (par opposition à des fichiers purement documentaires ou de config).
+
+    On se base sur les lignes "diff --git a/... b/..." qui indiquent le
+    début de chaque fichier changé dans le diff.
+
+    Args:
+        diff: le diff au format texte brut
+
+    Returns:
+        True s'il y a au moins un fichier de code parmi les changements.
+    """
+    changed_files = [
+        line.split(" b/")[-1]
+        for line in diff.splitlines()
+        if line.startswith("diff --git ")
+    ]
+
+    for filename in changed_files:
+        _, ext = os.path.splitext(filename)
+        if ext.lower() not in NON_CODE_EXTENSIONS:
+            return True
+
+    return False
+
+
 if __name__ == "__main__":
     # Ce bloc sert uniquement à tester le script tout seul, en local,
     # avant de l'intégrer dans le pipeline complet.
