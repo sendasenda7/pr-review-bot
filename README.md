@@ -1,6 +1,6 @@
 # PR Review Bot 🤖
 
-An AI-powered GitHub bot that automatically reviews pull requests. It analyzes the code diff using an LLM (Groq / Llama & GPT-OSS models) and posts a structured review comment directly on the PR — summary, potential issues, and missing tests — within seconds of the PR being opened or updated.
+An AI-powered GitHub bot that automatically can reviews pull requests. It analyzes the code diff using an LLM (Groq / Llama & GPT-OSS models) and posts a structured review comment directly on the PR — summary, potential issues, and missing tests — within seconds of the PR being opened or updated.
 
 ## Why this project
 
