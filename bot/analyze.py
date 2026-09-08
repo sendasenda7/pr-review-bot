@@ -48,7 +48,7 @@ def analyze_diff(diff: str, api_key: str) -> str:
         diff = diff[:max_chars] + "\n\n[... diff tronqué, trop long ...]"
 
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",
+        model="openai/gpt-oss-120b",
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": f"Voici le diff à analyser :\n\n{diff}"},
