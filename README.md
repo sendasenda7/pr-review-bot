@@ -1,5 +1,9 @@
 # PR Review Bot 🤖
 
+[![PR Review Bot](https://github.com/sendasenda7/pr-review-bot/actions/workflows/review.yml/badge.svg)](https://github.com/sendasenda7/pr-review-bot/actions/workflows/review.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
+
 An AI-powered GitHub bot that automatically reviews pull requests. It analyzes the code diff using an LLM (Groq / Llama & GPT-OSS models) and posts a structured review comment directly on the PR — summary, potential issues, and missing tests — within seconds of the PR being opened or updated.
 
 ## Why this project
@@ -22,6 +26,8 @@ Post the AI's analysis as a comment on the PR via the GitHub API
 
 ## Example output
 
+> ### Quality score: 8/10 ★★★★★★★★☆☆
+>
 > **Summary**
 > This change updates the AI model used in `analyze_diff` and adds a small `demo.py` file with two utility functions.
 >
@@ -33,12 +39,20 @@ Post the AI's analysis as a comment on the PR via the GitHub API
 > - Test `divide` with `b = 0`
 > - Test `get_user` with an out-of-range index
 
+## Features
+
+- **Structured AI output** — the LLM returns strict JSON (quality score, summary, concerns, missing tests), parsed and rendered into consistent Markdown
+- **Language-aware review** — detects the programming language(s) touched by the diff and tailors the analysis to their conventions
+- **No duplicate comments** — updates the existing review comment on new commits instead of piling up new ones
+- **Skips non-code diffs** — doc-only or config-only changes (README, lockfiles, etc.) don't trigger an AI call
+- **Resilient to API errors** — retries with exponential backoff on transient Groq errors, and posts a clear fallback message if the analysis ultimately fails
+
 ## Tech stack
 
 - **Python** — core logic
 - **GitHub Actions** — CI/CD trigger, runs on every `pull_request` event
 - **GitHub REST API** — fetching diffs and posting comments
-- **Groq API** (`openai/gpt-oss-120b`) — LLM-powered code analysis
+- **Groq API** (`openai/gpt-oss-120b`, JSON mode) — LLM-powered code analysis
 
 ## Project structure
 
@@ -79,10 +93,9 @@ python main.py
 
 ## Possible improvements
 
-- Update the existing comment instead of posting a new one on every push
-- Skip analysis when the diff contains no code changes
-- Add a configurable quality score
-- Auto-detect the language to tailor the review prompt
+- Configurable review rules via a `.pr-review-bot.yml` file in the target repo
+- Inline comments on specific lines instead of a single summary comment
+- Support for a local pre-commit hook to preview the review before opening the PR
 
 ## License
 

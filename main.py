@@ -9,8 +9,8 @@ Point d'entrée du bot. Orchestre les 3 étapes :
 import os
 import sys
 
-from bot.get_diff import get_pr_diff, diff_has_code_changes
-from bot.analyze import analyze_diff, AnalysisError
+from bot.get_diff import get_pr_diff, diff_has_code_changes, detect_languages
+from bot.analyze import analyze_diff, format_analysis_as_markdown, AnalysisError
 from bot.post_comment import post_pr_comment
 
 
@@ -49,9 +49,13 @@ def main():
         print("Aucun fichier de code modifié (doc/config uniquement), analyse ignorée.")
         return
 
+    languages = detect_languages(diff)
+    if languages:
+        print(f"Langages détectés : {', '.join(languages)}")
+
     print("Analyse du diff avec l'IA...")
     try:
-        analysis = analyze_diff(diff, groq_api_key)
+        analysis = analyze_diff(diff, groq_api_key, languages=languages)
     except AnalysisError as error:
         # L'IA n'a pas pu répondre après plusieurs tentatives : on prévient
         # quand même les développeurs via un commentaire, plutôt que de
@@ -64,8 +68,10 @@ def main():
         post_pr_comment(repo, pr_number, fallback_message, github_token)
         sys.exit(1)
 
+    comment_body = format_analysis_as_markdown(analysis)
+
     print("Publication du commentaire sur la PR...")
-    post_pr_comment(repo, pr_number, analysis, github_token)
+    post_pr_comment(repo, pr_number, comment_body, github_token)
 
     print("Terminé !")
 

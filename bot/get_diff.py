@@ -46,13 +46,22 @@ NON_CODE_EXTENSIONS = {
 }
 
 
+def get_changed_files(diff: str) -> list[str]:
+    """
+    Extrait la liste des noms de fichiers modifiés dans un diff, à partir
+    des lignes "diff --git a/... b/...".
+    """
+    return [
+        line.split(" b/")[-1]
+        for line in diff.splitlines()
+        if line.startswith("diff --git ")
+    ]
+
+
 def diff_has_code_changes(diff: str) -> bool:
     """
     Vérifie si un diff contient au moins un fichier de code modifié
     (par opposition à des fichiers purement documentaires ou de config).
-
-    On se base sur les lignes "diff --git a/... b/..." qui indiquent le
-    début de chaque fichier changé dans le diff.
 
     Args:
         diff: le diff au format texte brut
@@ -60,18 +69,61 @@ def diff_has_code_changes(diff: str) -> bool:
     Returns:
         True s'il y a au moins un fichier de code parmi les changements.
     """
-    changed_files = [
-        line.split(" b/")[-1]
-        for line in diff.splitlines()
-        if line.startswith("diff --git ")
-    ]
-
-    for filename in changed_files:
+    for filename in get_changed_files(diff):
         _, ext = os.path.splitext(filename)
         if ext.lower() not in NON_CODE_EXTENSIONS:
             return True
 
     return False
+
+
+# Correspondance extension -> nom de langage lisible, utilisée pour adapter
+# le prompt envoyé à l'IA (ex: mentionner les conventions Python vs JS).
+EXTENSION_TO_LANGUAGE = {
+    ".py": "Python",
+    ".js": "JavaScript",
+    ".jsx": "JavaScript (React)",
+    ".ts": "TypeScript",
+    ".tsx": "TypeScript (React)",
+    ".java": "Java",
+    ".go": "Go",
+    ".rb": "Ruby",
+    ".php": "PHP",
+    ".c": "C",
+    ".cpp": "C++",
+    ".cs": "C#",
+    ".rs": "Rust",
+    ".swift": "Swift",
+    ".kt": "Kotlin",
+    ".sql": "SQL",
+    ".sh": "Shell",
+    ".html": "HTML",
+    ".css": "CSS",
+}
+
+
+def detect_languages(diff: str) -> list[str]:
+    """
+    Détecte les langages de programmation présents dans un diff, à partir
+    des extensions des fichiers modifiés.
+
+    Args:
+        diff: le diff au format texte brut
+
+    Returns:
+        Liste des noms de langages détectés, triée par nombre de fichiers
+        décroissant (le langage principal en premier). Liste vide si aucun
+        langage connu n'est reconnu.
+    """
+    language_counts: dict[str, int] = {}
+
+    for filename in get_changed_files(diff):
+        _, ext = os.path.splitext(filename)
+        language = EXTENSION_TO_LANGUAGE.get(ext.lower())
+        if language:
+            language_counts[language] = language_counts.get(language, 0) + 1
+
+    return sorted(language_counts, key=language_counts.get, reverse=True)
 
 
 if __name__ == "__main__":
