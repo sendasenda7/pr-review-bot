@@ -10,7 +10,7 @@ import os
 import sys
 
 from bot.get_diff import get_pr_diff, diff_has_code_changes
-from bot.analyze import analyze_diff, AnalysisError
+from bot.analyze import analyze_diff, format_analysis_as_markdown, AnalysisError
 from bot.post_comment import post_pr_comment
 
 
@@ -64,8 +64,10 @@ def main():
         post_pr_comment(repo, pr_number, fallback_message, github_token)
         sys.exit(1)
 
+    comment_body = format_analysis_as_markdown(analysis)
+
     print("Publication du commentaire sur la PR...")
-    post_pr_comment(repo, pr_number, analysis, github_token)
+    post_pr_comment(repo, pr_number, comment_body, github_token)
 
     print("Terminé !")
 
