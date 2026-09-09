@@ -42,13 +42,15 @@ Règles :
 """
 
 
-def analyze_diff(diff: str, api_key: str) -> dict:
+def analyze_diff(diff: str, api_key: str, languages: list[str] | None = None) -> dict:
     """
     Envoie un diff de code à l'IA Groq et retourne son analyse structurée.
 
     Args:
         diff: le diff de la pull request (texte brut)
         api_key: la clé API Groq
+        languages: langages détectés dans le diff (ex: ["Python"]), utilisés
+            pour adapter l'analyse aux conventions de ce langage. Optionnel.
 
     Returns:
         Un dict avec les clés : score (int), summary (str),
@@ -62,8 +64,17 @@ def analyze_diff(diff: str, api_key: str) -> dict:
     if len(diff) > max_chars:
         diff = diff[:max_chars] + "\n\n[... diff tronqué, trop long ...]"
 
+    system_prompt = SYSTEM_PROMPT
+    if languages:
+        language_list = ", ".join(languages)
+        system_prompt += (
+            f"\nCe diff contient principalement du code {language_list}. "
+            f"Adapte ton analyse aux conventions et bonnes pratiques propres "
+            f"à {language_list} (style, pièges courants, outils de test habituels)."
+        )
+
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": system_prompt},
         {"role": "user", "content": f"Voici le diff à analyser :\n\n{diff}"},
     ]
 
