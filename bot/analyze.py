@@ -76,7 +76,7 @@ def analyze_diff(diff: str, api_key: str) -> dict:
                 model="openai/gpt-oss-120b",
                 messages=messages,
                 temperature=0.3,
-                max_tokens=600,
+                max_tokens=1000,
                 # Force l'IA à répondre en JSON valide, plutôt que du texte libre
                 # qu'on devrait parser à l'aveugle.
                 response_format={"type": "json_object"},
